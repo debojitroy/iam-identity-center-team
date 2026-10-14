@@ -13,19 +13,18 @@
 # limitations under the License.
 
 # This script should be deployed in the Organisation Management account
-# The script enables delegated admin for AWS Account Management, AWS IAM IdC and CloudTrail Lake
+# The script enables delegated admin for AWS Account Management, AWS IAM IdC and Amazon CloudWatch
 
 #!/usr/bin/env bash
 set +e
 
 . "./parameters.sh"
+. "./audit-logs-prereqs.sh"
 
 export AWS_PROFILE=$ORG_MASTER_PROFILE
 
 idc=`aws organizations list-delegated-administrators --service-principal sso.amazonaws.com --region $REGION --output json | jq -r '.DelegatedAdministrators[] | select(.Id=='\"$TEAM_ACCOUNT\"') | .Id'`
-cloudtrail=`aws organizations list-delegated-administrators --service-principal cloudtrail.amazonaws.com --region $REGION --output json | jq -r '.DelegatedAdministrators[] | select(.Id=='\"$TEAM_ACCOUNT\"') | .Id'`
 accountManager=`aws organizations list-delegated-administrators --service-principal account.amazonaws.com --region $REGION --output json | jq -r '.DelegatedAdministrators[] | select(.Id=='\"$TEAM_ACCOUNT\"') | .Id'`
-serviceRole=`aws iam get-role --role-name AWSServiceRoleForCloudTrail --region $REGION `
 
 # Enable trusted access for account management
 aws organizations enable-aws-service-access --service-principal account.amazonaws.com --region $REGION
@@ -43,24 +42,12 @@ else
     echo "$TEAM_ACCOUNT is already configured as delegated Admin for AWS Account Manager"
 fi
 
-# Enable trusted access for cloudtrail
-aws organizations enable-aws-service-access --service-principal cloudtrail.amazonaws.com --region $REGION
+# Enable CloudWatch telemetry config for the organization (also enables trusted access for CloudWatch)
+ensure_org_telemetry_evaluation || { echo "Failed to start organization CloudWatch telemetry evaluation" >&2; exit 1; }
+ensure_logs_centralization_role || { echo "Failed to create the CloudWatch Logs centralization service-linked role" >&2; exit 1; }
 
-if [ -z "$serviceRole" ]; then
-    aws iam create-service-linked-role --aws-service-name cloudtrail.amazonaws.com --region $REGION 
-fi
-
-# Enable Delegated Admin for CloudTrail
-if [ -z "$cloudtrail" ]
-then
-    aws organizations register-delegated-administrator \
-        --account-id $TEAM_ACCOUNT \
-        --service-principal cloudtrail.amazonaws.com\
-        --region $REGION
-    echo "$TEAM_ACCOUNT configured as delegated Admin for cloudtrail"
-else
-    echo "$TEAM_ACCOUNT is already configured as delegated Admin for cloudtrail"
-fi
+# Enable Delegated Admin for CloudWatch (organization telemetry and centralization rules)
+ensure_cloudwatch_delegated_admin "$TEAM_ACCOUNT" || { echo "Failed to configure $TEAM_ACCOUNT as delegated Admin for Amazon CloudWatch" >&2; exit 1; }
 
 # Enable trusted access for IdC
 aws organizations enable-aws-service-access --service-principal sso.amazonaws.com  --region $REGION

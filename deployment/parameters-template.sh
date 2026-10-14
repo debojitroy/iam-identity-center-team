@@ -20,7 +20,8 @@ TEAM_ACCOUNT_PROFILE=team_account_profile
 TEAM_ADMIN_GROUP="team_admin_group_name"
 TEAM_AUDITOR_GROUP="team_auditor_group_name"
 TAGS="project=iam-identity-center-team environment=prod"
-CLOUDTRAIL_AUDIT_LOGS=arn:aws:cloudtrail:us-east-1:123456789101:eventdatastore/e646f20d-7959-4682-be84-6c5b8a37cf15
+# CloudTrail management events to collect for session activity: read, write, read_write or none
+CLOUDTRAIL_AUDIT_LOGS=read_write
 SECRET_NAME=TEAM-IDC-APP
 CACHE_TTL=604800
 

@@ -23,6 +23,13 @@ else
   export AWS_PROFILE=$TEAM_ACCOUNT_PROFILE
 fi
 
+. "./audit-logs-prereqs.sh"
+ensure_logs_centralization_role
+# Management-account deployments skip init.sh, so turn on organization telemetry here
+if [ -z "$TEAM_ACCOUNT" ]; then
+  ensure_org_telemetry_evaluation
+fi
+
 if [ -z "$SECRET_NAME" ]; then
   git remote remove origin
   git remote add origin codecommit::$REGION://team-idc-app

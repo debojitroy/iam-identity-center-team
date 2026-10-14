@@ -1,0 +1,126 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "TEAM session audit logs: CloudTrail events delivered to Amazon CloudWatch Logs and centralized into the TEAM account",
+  "Parameters": {
+    "env": {
+      "Type": "String"
+    },
+    "CloudTrailAuditLogs": {
+      "Type": "String",
+      "AllowedValues": ["read", "write", "read_write", "none"],
+      "Default": "read",
+      "Description": "CloudTrail management events to collect: read, write, read_write, or none"
+    },
+    "OrganizationId": {
+      "Type": "String",
+      "AllowedPattern": "^o-[a-z0-9]{10,32}$",
+      "Description": "AWS Organizations ID whose accounts are centralized"
+    },
+    "SourceRegions": {
+      "Type": "CommaDelimitedList",
+      "Description": "Regions to centralize CloudTrail log groups from"
+    },
+    "SourceRetentionInDays": {
+      "Type": "Number",
+      "Default": 7,
+      "AllowedValues": [1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1096, 1827, 2192, 2557, 2922, 3288, 3653],
+      "Description": "Retention of the managed aws/cloudtrail/* log groups in each member account"
+    },
+    "AuditLogRetentionInDays": {
+      "Type": "Number",
+      "Default": 30,
+      "AllowedValues": [1, 3, 5, 7, 14, 30, 60, 90, 120, 150, 180, 365, 400, 545, 731, 1096, 1827, 2192, 2557, 2922, 3288, 3653],
+      "Description": "Retention of the central TEAM audit log group"
+    }
+  },
+  "Conditions": {
+    "IsAuditLogsEnabled": {
+      "Fn::Not": [{ "Fn::Equals": [{ "Ref": "CloudTrailAuditLogs" }, "none"] }]
+    },
+    "IsReadAndWrite": {
+      "Fn::Equals": [{ "Ref": "CloudTrailAuditLogs" }, "read_write"]
+    },
+    "IsReadOnly": {
+      "Fn::Equals": [{ "Ref": "CloudTrailAuditLogs" }, "read"]
+    }
+  },
+  "Resources": {
+    "AuditLogGroup": {
+      "Type": "AWS::Logs::LogGroup",
+      "Properties": {
+        "LogGroupName": { "Fn::Sub": "team-audit-${env}-cloudtrail" },
+        "RetentionInDays": { "Ref": "AuditLogRetentionInDays" }
+      }
+    },
+    "CloudTrailTelemetryRule": {
+      "Type": "AWS::ObservabilityAdmin::OrganizationTelemetryRule",
+      "Condition": "IsAuditLogsEnabled",
+      "Properties": {
+        "RuleName": { "Fn::Sub": "team-${env}-cloudtrail" },
+        "Rule": {
+          "ResourceType": "AWS::CloudTrail",
+          "TelemetryType": "Logs",
+          "AllRegions": true,
+          "DestinationConfiguration": {
+            "DestinationType": "cloud-watch-logs",
+            "RetentionInDays": { "Ref": "SourceRetentionInDays" },
+            "CloudtrailParameters": {
+              "AdvancedEventSelectors": [
+                {
+                  "Fn::If": [
+                    "IsReadAndWrite",
+                    {
+                      "Name": "TEAM management events",
+                      "FieldSelectors": [
+                        { "Field": "eventCategory", "Equals": ["Management"] }
+                      ]
+                    },
+                    {
+                      "Name": "TEAM management events",
+                      "FieldSelectors": [
+                        { "Field": "eventCategory", "Equals": ["Management"] },
+                        { "Field": "readOnly", "Equals": [{ "Fn::If": ["IsReadOnly", "true", "false"] }] }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "AuditLogCentralizationRule": {
+      "Type": "AWS::ObservabilityAdmin::OrganizationCentralizationRule",
+      "Condition": "IsAuditLogsEnabled",
+      "Properties": {
+        "RuleName": { "Fn::Sub": "team-${env}-cloudtrail" },
+        "Rule": {
+          "Source": {
+            "Regions": { "Ref": "SourceRegions" },
+            "Scope": { "Fn::Sub": "OrganizationId = '${OrganizationId}'" },
+            "SourceLogsConfiguration": {
+              "LogGroupSelectionCriteria": "LogGroupName LIKE 'aws/cloudtrail/%'",
+              "EncryptedLogGroupStrategy": "SKIP"
+            }
+          },
+          "Destination": {
+            "Account": { "Ref": "AWS::AccountId" },
+            "Region": { "Ref": "AWS::Region" },
+            "DestinationLogsConfiguration": {
+              "LogGroupNameConfiguration": {
+                "LogGroupNamePattern": { "Ref": "AuditLogGroup" }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "Outputs": {
+    "AuditLogGroupName": {
+      "Description": "Central log group holding CloudTrail events from every account in the organization",
+      "Value": { "Ref": "AuditLogGroup" }
+    }
+  }
+}

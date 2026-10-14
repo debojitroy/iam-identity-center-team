@@ -27,15 +27,19 @@ parent: Solution deployment
 ### Dedicated TEAM account
 - Dedicated AWS account for deploying TEAM Application. This account will also be configured as delegated admin for:
   - IAM Identity Center
-  - CloudTrail Lake
+  - Amazon CloudWatch (telemetry config and log centralization)
   - Account management
 
   [As per AWS best practice](https://docs.aws.amazon.com/organizations/latest/userguide/orgs_best-practices_mgmt-acct.html#best-practices_mgmt-use), it is not recommended to deploy resources in the organization management account. Designate a dedicated account for deploying the TEAM solution. We recommend that you do not deploy any other workloads in this account, and carefully manage users with access to this account based on a need-to-do principle.
   {: .note}
 
-### Cloudtrail Lake organization event datastore
-TEAM uses AWS CloudTrail Lake for querying, auditing and logging API activities and actions performed by a user during the period of elevated access.
-Create a Cloudtrail Lake organization event datastore in the dedicated TEAM account that stores all log events for all AWS account in your organization
+### CloudTrail events in Amazon CloudWatch
+TEAM records the API activity of each elevated access session from AWS CloudTrail. The TEAM stack creates an organization-wide CloudWatch telemetry enablement rule that delivers CloudTrail management events to CloudWatch Logs in every account, and a centralization rule that copies those events into one log group in the TEAM account (`team-audit-<env>-cloudtrail`). No CloudTrail trail or CloudTrail Lake event data store is required.
+
+`init.sh` turns on CloudWatch telemetry config for the organization and registers the TEAM account as the CloudWatch delegated administrator.
+
+> Upgrading an existing TEAM deployment removes its CloudTrail Lake event data store. Export any history you need first with **CloudTrail console → Lake → Event data stores → Actions → Export to CloudWatch**.
+{: .warning}
 
 ## AWS Secrets Manager
 TEAM allows you to use external repositories for deploying the solution. 

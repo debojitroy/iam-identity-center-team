@@ -10,6 +10,21 @@ parent: Solution deployment
 Ensure that the **parameters.sh** in the **deployment** folder is up to date before updating the TEAM solution
 {: .note}
 
+## Upgrading from CloudTrail Lake
+
+Earlier versions of TEAM read session activity from a CloudTrail Lake event data store. This version reads it from Amazon CloudWatch Logs. Complete these steps before running the normal update:
+
+1. Export any CloudTrail Lake history you need (**CloudTrail console -> Lake -> Event data stores -> Actions -> Export to CloudWatch**).
+   > The upgrade deletes the TEAM event data store. Its history cannot be recovered after the update.
+   {: .warning}
+2. Pull the new **init.sh** changes and re-run `./init.sh` from the organization management account. This registers the TEAM account as the CloudWatch delegated administrator and starts organization telemetry configuration. The auditLogs stack fails without it.
+   > For management-account deployments, **update.sh** performs this step.
+   {: .note}
+3. In **parameters.sh**, change `CLOUDTRAIL_AUDIT_LOGS` from an event data store ARN to `read`, `write`, `read_write` or `none`. ARNs are rejected.
+4. Run `./update.sh` as described below.
+
+## Update steps
+
 Run the **update.sh** bash script in the **deployment** folder to update the TEAM application to the latest version.
 
 The **update.sh** bash script performs the following actions:

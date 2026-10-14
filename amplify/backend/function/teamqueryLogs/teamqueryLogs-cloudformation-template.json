@@ -15,9 +15,6 @@
     },
     "s3Key": {
       "Type": "String"
-    },
-    "customcloudtrailLakeEventDataStoreOutput": {
-      "Type": "String"
     }
   },
   "Conditions": {
@@ -75,9 +72,6 @@
             },
             "REGION": {
               "Ref": "AWS::Region"
-            },
-            "EVENT_DATA_STORE": {
-              "Ref": "customcloudtrailLakeEventDataStoreOutput"
             }
           }
         },
@@ -183,7 +177,7 @@
           "Statement": [
             {
               "Action": [
-                "cloudtrail:GetQueryResults"
+                "logs:GetQueryResults"
               ],
               "Resource": [
                 "*"

@@ -23,8 +23,8 @@ export type AmplifyDependentResourcesAttributes = {
     }
   },
   "custom": {
-    "cloudtrailLake": {
-      "EventDataStoreOutput": "string"
+    "auditLogs": {
+      "AuditLogGroupName": "string"
     },
     "sns": {
       "NotificationTopicArn": "string"
