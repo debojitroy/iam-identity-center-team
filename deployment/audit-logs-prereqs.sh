@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# shellcheck shell=bash
+
 # Idempotent prerequisites for TEAM session audit logs in Amazon CloudWatch.
 # Source this file; the functions use the current AWS_PROFILE and $REGION.
 
