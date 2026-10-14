@@ -1,9 +1,10 @@
 [
   {
-    "Action": [
-      "cloudtrail:DescribeQuery",
-      "cloudtrail:StartQuery",
-      "cloudtrail:GetQueryResults"],
+    "Action": ["logs:StartQuery"],
+    "Resource": ["arn:aws:logs:*:*:log-group:team-audit-*"]
+  },
+  {
+    "Action": ["logs:GetQueryResults"],
     "Resource": ["*"]
   }
 ]

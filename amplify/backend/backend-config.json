@@ -92,7 +92,7 @@
       "providerPlugin": "awscloudformation",
       "service": "customCloudformation"
     },
-    "cloudtrailLake": {
+    "auditLogs": {
       "dependsOn": [],
       "providerPlugin": "awscloudformation",
       "service": "customCloudformation"
@@ -356,10 +356,10 @@
         },
         {
           "attributes": [
-            "EventDataStoreOutput"
+            "AuditLogGroupName"
           ],
           "category": "custom",
-          "resourceName": "cloudtrailLake"
+          "resourceName": "auditLogs"
         }
       ],
       "providerPlugin": "awscloudformation",
@@ -434,15 +434,6 @@
     },
     "teamqueryLogs": {
       "build": true,
-      "dependsOn": [
-        {
-          "attributes": [
-            "EventDataStoreOutput"
-          ],
-          "category": "custom",
-          "resourceName": "cloudtrailLake"
-        }
-      ],
       "providerPlugin": "awscloudformation",
       "service": "Lambda"
     }

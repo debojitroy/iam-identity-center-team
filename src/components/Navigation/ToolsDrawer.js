@@ -21,7 +21,7 @@ function ToolsDrawer() {
           <li>AWS Lambda</li>
           <li>AWS Step Functions</li>
           <li>Amazon Cognito</li>
-          <li>AWS CloudTrail Lake</li>
+          <li>Amazon CloudWatch Logs</li>
         </ul>
         <h4>Benefits</h4>
         Temporary Elevated Access Management (TEAM) solution helps to:

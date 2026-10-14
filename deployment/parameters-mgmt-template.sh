@@ -18,6 +18,7 @@ ORG_MASTER_PROFILE=org_master_profile
 TEAM_ADMIN_GROUP="team_admin_group_name"
 TEAM_AUDITOR_GROUP="team_auditor_group_name"
 TAGS="project=iam-identity-center-team environment=prod"
+# CloudTrail management events to collect for session activity: read, write, read_write or none
 CLOUDTRAIL_AUDIT_LOGS=read_write
 SECRET_NAME=TEAM-IDC-APP
 # Uncomment the next line only if you have a custom domain

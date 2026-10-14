@@ -54,7 +54,7 @@ Update the parameters in the **parameters.sh** file as follows:
 - **TEAM_ACCOUNT_PROFILE** - Named profile for TEAM Application deployment Account
 - **TEAM_ADMIN_GROUP** - Name of IAM Identity Center group for TEAM administrators
 - **TEAM_AUDITOR_GROUP** - Name of IAM Identity Center group for TEAM auditors
-- **CLOUDTRAIL_AUDIT_LOGS** - ARN of organization CloudTrail Lake event datastore
+- **CLOUDTRAIL_AUDIT_LOGS** - CloudTrail management events to collect for session activity: `read`, `write`, `read_write` or `none`
 - **SECRET_NAME** - Name of the Secret stored in AWS Secret Manager
 > When using Github as the external repository ensure you use Tokens (classic) (https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens#personal-access-tokens-classic) instead of Fine-grained tokens
 
@@ -75,11 +75,27 @@ TEAM_ACCOUNT_PROFILE=TeamAccountProfileName
 TEAM_ADMIN_GROUP="team_admin_group_name"
 TEAM_AUDITOR_GROUP="team_auditor_group_name"
 TAGS="tag1=value1 tag2=value2"
-CLOUDTRAIL_AUDIT_LOGS=arn:aws:cloudtrail:us-east-1:123456789101:eventdatastore/e646f20d-7959-4682-be84-6c5b8a37cf15
+CLOUDTRAIL_AUDIT_LOGS=read_write
 UI_DOMAIN=portal.teamtest.online
 SECRET_NAME=TEAM-IDC-APP
 CACHE_TTL=604800
 ```
+
+### Audit log settings
+
+> **Source Regions.** The telemetry rule collects CloudTrail management events in all Regions of the organization (`AllRegions`), but only the Regions in `SourceRegions` are centralized into the TEAM account. The default is the 17 Regions enabled by default in commercial AWS; add opt-in Regions explicitly if your organization uses them. CloudTrail records global-service events such as IAM and STS in `us-east-1`, so keep it in the list. There are two supported ways to change the list:
+> - Set `AUDIT_LOG_REGIONS` (comma-separated) as an environment variable on the Amplify `main` branch.
+> - Edit `SourceRegions` in `amplify/backend/custom/auditLogs/parameters.json` in your fork. This is the durable option, because the branch variable can be lost when the TEAM-IDC-APP stack updates the branch.
+{: .note}
+
+> **Existing telemetry rules.** An existing organization-level CloudTrail telemetry enablement rule conflicts with the one TEAM creates. Remove it or fold TEAM's needs into it before deploying.
+{: .warning}
+
+> **Partitions.** The audit log pipeline supports commercial AWS partitions only.
+{: .note}
+
+> **Organization ID.** The build looks up the organization ID with `organizations:DescribeOrganization`. Set `ORGANIZATION_ID` as an Amplify branch environment variable to skip that lookup.
+{: .note}
 
 ---
 
@@ -87,10 +103,13 @@ CACHE_TTL=604800
 The **init.sh** bash script in the **deployment** folder configures the following prerequisites required for deploying the TEAM application:
 
 - Configures the **TEAM_ACCOUNT** as a delegated admin for account management
-- Configures the **TEAM_ACCOUNT** as a delegated admin for cloudtrail management
+- Turns on Amazon CloudWatch telemetry config for the organization in all Regions and creates the CloudWatch Logs centralization service-linked role
+- Configures the **TEAM_ACCOUNT** as a delegated admin for Amazon CloudWatch
 - Configures the **TEAM_ACCOUNT** as a delegated admin for AWS IAM Identity Center Management
   > Ensure that the named profile for the **Organisation Management account** has sufficient permissions before executing the **init.sh** script
   {: .note}
+
+The script waits for the CloudWatch telemetry config to reach RUNNING in all Regions, which can take several minutes on first run, and it is safe to re-run if it stops early.
 
 Execute the following command in the root directory to deploy the script
 
@@ -103,7 +122,7 @@ If the init.sh script is deployed successfully, the output should be similar as 
 
 ```
 $ 123456789101 configured as delegated Admin for AWS Account Manager
-$ 123456789101 configured as delegated Admin for cloudtrail
+$ 123456789101 configured as delegated Admin for Amazon CloudWatch
 $ 123456789101 configured as delegated Admin for IAM Identity Center
 ```
 

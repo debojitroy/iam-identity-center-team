@@ -13,9 +13,6 @@
     "env": {
       "Type": "String"
     },
-    "customcloudtrailLakeEventDataStoreOutput": {
-      "Type": "String"
-    },
     "s3Key": {
       "Type": "String"
     },
@@ -26,6 +23,9 @@
     "apiteamGraphQLAPIEndpointOutput": {
       "Type": "String",
       "Default": "apiteamGraphQLAPIEndpointOutput"
+    },
+    "customauditLogsAuditLogGroupName": {
+      "Type": "String"
     }
   },
   "Conditions": {
@@ -84,9 +84,6 @@
             "REGION": {
               "Ref": "AWS::Region"
             },
-            "EVENT_DATA_STORE": {
-              "Ref": "customcloudtrailLakeEventDataStoreOutput"
-            },
             "API_AWSPIM_GRAPHQLAPIIDOUTPUT": {
               "Ref": "apiteamGraphQLAPIIdOutput"
             },
@@ -97,6 +94,9 @@
               "Fn::ImportValue": {
                 "Fn::Sub": "${apiteamGraphQLAPIIdOutput}:GetAtt:sessionsTable:Name"
               }
+            },
+            "AUDIT_LOG_GROUP": {
+              "Ref": "customauditLogsAuditLogGroupName"
             }
           }
         },
@@ -354,9 +354,16 @@
           "Statement": [
             {
               "Action": [
-                "cloudtrail:DescribeQuery",
-                "cloudtrail:StartQuery",
-                "cloudtrail:GetQueryResults"
+                "logs:StartQuery"
+              ],
+              "Resource": [
+                "arn:aws:logs:*:*:log-group:team-audit-*"
+              ],
+              "Effect": "Allow"
+            },
+            {
+              "Action": [
+                "logs:GetQueryResults"
               ],
               "Resource": [
                 "*"
