@@ -12,6 +12,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Session activity logs now use AWS CloudTrail events in Amazon CloudWatch Logs (organization telemetry enablement rule plus a centralization rule into the TEAM account) instead of AWS CloudTrail Lake, which closed to new customers on 2026-05-31.
 - `CLOUDTRAIL_AUDIT_LOGS` accepts only `read`, `write`, `read_write` or `none`; CloudTrail Lake event data store ARNs are no longer supported.
 - `init.sh` registers the TEAM account as the Amazon CloudWatch delegated administrator instead of the CloudTrail delegated administrator.
+- `init.sh` waits for CloudWatch telemetry config to reach RUNNING in all Regions and retries once when the first start fails while CloudWatch's service-linked role propagates.
+
+### Security
+
+- Session activity log queries match only the session's own principal and permission set (anchored, case-insensitive match) and validate every value before it reaches the query; the previous CloudTrail Lake SQL interpolated unvalidated values and used substring matches that could include other users' events.
+- `uuid` in the `teamgetLogs` and `teamStatus` Lambdas: 8.3.2 -> 11.1.1 (GHSA-w5hq-g745-h8pq).
+- `urllib3` in the `teamRouter` and `teamNotifications` Lambdas: 2.7.0 -> 2.8.0 (GHSA-vxq7-64xx-v4gw, GHSA-8988-9cw3-xx77, GHSA-gh4c-6fx4-qh6g).
+- `shell-quote` in the frontend: 1.10.0 -> 1.11.0 (GHSA-pqg4-j6r4-53mv, command injection via a line terminator in a token after a comment token).
+- `proxy-addr` in the frontend: 2.0.7 -> 2.0.8 (GHSA-jqcg-44mw-7w3h, IP spoofing via IPv4-mapped IPv6 trust subnet).
+- `lodash` in the frontend: 4.17.21 -> 4.18.1 (GHSA-r5fr-rjxr-66jc, GHSA-f23m-r3pf-42rh, GHSA-xxjr-mmjv-4gpg).
+
+### Known issues
+
+- `basic-ftp` 5.0.4 (GHSA-5rq4-664w-9x2c, GHSA-6v7q-wjvx-w8wg) remains in Amplify build-time tooling (graphql-ttl-transformer -> @aws-amplify/amplify-cli-core -> proxy-agent -> get-uri). It is not deployed. The fix requires basic-ftp 6.x.
+- The browser bundle still uses Amplify JS v5 (`aws-amplify` 5.x, with transitive js-cookie 2.x and older @aws-sdk 3.6 packages flagged by npm audit). The fix is the Amplify JS v6 upgrade.
+- The Create React App toolchain (`react-scripts` 5) reports many High advisories in build and dev-server dependencies. These are not deployed. The fix is moving off react-scripts.
 
 ### Removed
 
