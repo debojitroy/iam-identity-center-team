@@ -7,6 +7,8 @@ The solution is a custom application that allows users to **request access to an
 
 Refer to the [blog post on the AWS Security Blog](https://aws.amazon.com/blogs/security/temporary-elevated-access-management-with-iam-identity-center/) for a background and an overview of the TEAM solution.
 
+> **Session audit logs now use Amazon CloudWatch.** AWS CloudTrail Lake closed to new customers on 31 May 2026, so this version records session activity from CloudTrail events in Amazon CloudWatch Logs. See [CloudWatch audit logs (migration and testing)](docs/docs/deployment/cloudwatch-migration.md) for what changed, how to deploy or upgrade, and how to test it.
+
 ![](docs/docs/assets/images/home_page.png)
 ## Getting Started
 Visit our **[Documentation pages](https://aws-samples.github.io/iam-identity-center-team/)** to learn more and get started installing and using TEAM.
